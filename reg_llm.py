@@ -1,0 +1,6 @@
+def retrieve(query, k=3):
+    ...
+    return retrieved_chunks
+
+def generate_answer(query, context):
+    ...
