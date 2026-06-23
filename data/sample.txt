@@ -1,0 +1,14 @@
+This is a short sample document about retrieval augmented generation.
+
+Retrieval-augmented generation (RAG) augments a generative model with an
+external knowledge source. The system retrieves relevant documents and uses
+them as context for generation. This repository demonstrates chunking,
+embedding, retrieval, and simple answer synthesis without heavy abstractions.
+
+Experiment: compare fixed vs overlapping chunking, and measure recall@k.
+
+Another paragraph to increase content. The quick brown fox jumps over the lazy dog.
+This sentence shares common words with many test queries.
+
+Final note: the demo uses sentence-transformers for embeddings when available,
+and a lightweight vector search via scikit-learn.
