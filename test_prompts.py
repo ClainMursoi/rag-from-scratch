@@ -1,13 +1,16 @@
 """Run the RAG demo with example prompts to showcase functionality."""
 
-from ingest import load_documents
-from reg_llm import build_index, retrieve, generate_answer
+from typing import List
 from pathlib import Path
 
-DATA = Path(__file__).parent / "data" / "sample.txt"
+import config
+from ingest import load_documents
+from reg_llm import build_index, retrieve, generate_answer
+
+DATA = Path(__file__).parent / config.DATA_PATH
 
 # Example queries that demonstrate different aspects of the RAG system
-EXAMPLE_QUERIES = [
+EXAMPLE_QUERIES: List[str] = [
     "What is retrieval-augmented generation?",
     "Tell me about chunking and embeddings",
     "How does the system retrieve documents?",
@@ -15,7 +18,7 @@ EXAMPLE_QUERIES = [
     "What does the demo use for vector search?",
 ]
 
-def main():
+def main() -> None:
     if not DATA.exists():
         print(f"Missing sample data at {DATA}.")
         return
@@ -28,7 +31,7 @@ def main():
     print(f"\n✓ Loaded {len(docs)} documents from {DATA}")
     
     print("Building index (chunking, embedding, indexing)...")
-    build_index(docs, chunk_size=200, overlap=50)
+    build_index(docs, chunk_size=config.CHUNK_SIZE, overlap=config.CHUNK_OVERLAP)
     print("✓ Index built successfully!\n")
     
     print("=" * 80)
@@ -38,7 +41,7 @@ def main():
         print(f"Query: {query}\n")
         
         try:
-            contexts = retrieve(query, k=3)
+            contexts = retrieve(q, k=config.RETRIEVAL_K)
             print(f"Retrieved {len(contexts)} chunks:")
             for j, chunk in enumerate(contexts, 1):
                 preview = chunk[:80].replace('\n', ' ') + ("..." if len(chunk) > 80 else "")
