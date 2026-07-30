@@ -1,11 +1,13 @@
 """Run the RAG demo with example prompts to showcase functionality."""
 
+import sys
 from typing import List
 from pathlib import Path
 
 import config
 from ingest import load_documents
 from reg_llm import build_index, retrieve, generate_answer
+from utils.errors import RAGError
 
 DATA = Path(__file__).parent / config.DATA_PATH
 
@@ -20,40 +22,51 @@ EXAMPLE_QUERIES: List[str] = [
 
 def main() -> None:
     if not DATA.exists():
-        print(f"Missing sample data at {DATA}.")
-        return
+        print(f"❌ Error: Missing sample data at {DATA}.")
+        print(f"   Please ensure the data file exists at: {DATA}")
+        sys.exit(1)
 
-    print("=" * 80)
-    print("RAG FROM SCRATCH - DEMO WITH EXAMPLE PROMPTS")
-    print("=" * 80)
-    
-    docs = load_documents(str(DATA))
-    print(f"\n✓ Loaded {len(docs)} documents from {DATA}")
-    
-    print("Building index (chunking, embedding, indexing)...")
-    build_index(docs, chunk_size=config.CHUNK_SIZE, overlap=config.CHUNK_OVERLAP)
-    print("✓ Index built successfully!\n")
-    
-    print("=" * 80)
-    
-    for i, query in enumerate(EXAMPLE_QUERIES, 1):
-        print(f"\n[Example {i}]")
-        print(f"Query: {query}\n")
+    try:
+        print("=" * 80)
+        print("RAG FROM SCRATCH - DEMO WITH EXAMPLE PROMPTS")
+        print("=" * 80)
         
-        try:
-            contexts = retrieve(q, k=config.RETRIEVAL_K)
-            print(f"Retrieved {len(contexts)} chunks:")
-            for j, chunk in enumerate(contexts, 1):
-                preview = chunk[:80].replace('\n', ' ') + ("..." if len(chunk) > 80 else "")
-                print(f"  [{j}] {preview}")
+        docs = load_documents(str(DATA))
+        print(f"\n✓ Loaded {len(docs)} documents from {DATA}")
+        
+        print("Building index (chunking, embedding, indexing)...")
+        build_index(docs, chunk_size=config.CHUNK_SIZE, overlap=config.CHUNK_OVERLAP)
+        print("✓ Index built successfully!\n")
+        
+        print("=" * 80)
+        
+        for i, query in enumerate(EXAMPLE_QUERIES, 1):
+            print(f"\n[Example {i}]")
+            print(f"Query: {query}\n")
             
-            print("\nSynthesized Answer:")
-            answer = generate_answer(query, contexts)
-            print(answer)
-        except Exception as e:
-            print(f"Error: {e}")
-        
-        print("\n" + "-" * 80)
+            try:
+                contexts = retrieve(query, k=config.RETRIEVAL_K)
+                print(f"Retrieved {len(contexts)} chunks:")
+                for j, chunk in enumerate(contexts, 1):
+                    preview = chunk[:80].replace('\n', ' ') + ("..." if len(chunk) > 80 else "")
+                    print(f"  [{j}] {preview}")
+                
+                print("\nSynthesized Answer:")
+                answer = generate_answer(query, contexts)
+                print(answer)
+            except RAGError as e:
+                print(f"❌ Error: {e}")
+            
+            print("\n" + "-" * 80)
+    
+    except RAGError as e:
+        print(f"\n❌ Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n❌ Unexpected error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
